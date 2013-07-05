@@ -98,6 +98,7 @@ for (int i = 0; i < nooa; i ++)
 }
 
 double oxyz[nooa][3], hxyz[noha][3], dx, dy, dz, ohdist;
+vector <double> oxatoms, oyatoms, ozatoms, hxatoms, hyatoms, hzatoms;
 
 for (int i = 0; i < timestep; i ++)
 {
@@ -129,37 +130,78 @@ for (int i = 0; i < timestep; i ++)
 			dz -= zlattice*pbc_round(dz/zlattice);
 
 			ohdist = sqrt ( dx*dx + dy*dy + dz*dz );
-			if ( ohdist < 1.2 )
+			if ( ohdist < 1.15 )
 			{
 				ohindices[j][count] = k;
 				count ++;
 			}
 		}
 	}
-
-	output << 2 << "\n\n";
-
+	
 	for (int j = 0; j < nooa; j ++)
 	{
-		int hcount = 0;
 		for (int k = 1; k < 6; k ++)
 		{
-			if (ohindices[j][0] != ohindices[j][k] && ohindices[j][k] != -1)
+			if (ohindices[j][k-1] == ohindices[j][k])
 			{
-				hcount ++;
+				ohindices[j][k] = -1;
+			}
+			if (k > 1)
+			{
+				if (ohindices[j][k-1] + 1 == ohindices[j][k])
+				{
+					ohindices[j][k] = -1;
+				}
 			}
 		}
-		
-		if (hcount != 1)
+	}
+
+	for ( int j = 0; j < nooa; j ++)
+	{	
+		int count = 0;
+		for (int k = 0; k < 6; k ++)
 		{
-			output << "O" << "\t" << oxyz[j][0] << "\t" << oxyz[j][1] << "\t" << oxyz[j][2] << endl;
-			output << "H" << "\t" << hxyz[ohindices[j][0]][0] << "\t" << hxyz[ohindices[j][0]][1] << "\t" << hxyz[ohindices[j][0]][2] << endl;
+			if (ohindices[j][k] != -1)
+			{
+				count ++;
+			}
 		}
-	}				
+		cout << count << endl;
+		if (count == 1)
+		{
+			oxatoms.push_back(oxyz[j][0]);
+			oyatoms.push_back(oxyz[j][1]);
+			ozatoms.push_back(oxyz[j][2]);
+			hxatoms.push_back(hxyz[ohindices[j][0]][0]);
+			hyatoms.push_back(hxyz[ohindices[j][0]][1]);
+			hzatoms.push_back(hxyz[ohindices[j][0]][2]);
+		}		
+	}
 }
 
+int xround0 = round(oxatoms[0]);
+int yround0 = round(oyatoms[0]);
+int zround0 = round(ozatoms[0]);
+
+for (int i = 0; i < oxatoms.size(); i ++)
+{
+	int xround = round(oxatoms[i]);
+	int yround = round(oyatoms[i]);
+	int zround = round(ozatoms[i]);
 
 
+	if (xround - xround0 < 2 && yround - yround0 < 2 && zround - zround0 < 2)
+	{
+		xround0 = xround;
+		yround0 = yround;
+		zround0 = zround;
+					
+		output << 2 << "\n\n";
+		output << "O" << "\t" << oxatoms[i] << "\t" << oyatoms[i] << "\t" << ozatoms[i] << endl;
+		output << "H" << "\t" << hxatoms[i] << "\t" << hyatoms[i] << "\t" << hzatoms[i] << endl;
+	}
+
+}	
 input.close();
 output.close();
 return 0;
